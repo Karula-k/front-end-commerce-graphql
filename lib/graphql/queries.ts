@@ -1,4 +1,14 @@
 import { gql } from "@apollo/client";
+import { Product } from "@/lib/stores/cart-store";
+
+// GraphQL Response Types
+export interface GetProductsResponse {
+  getProducts: Product[];
+}
+
+export interface GetProductResponse {
+  getProduct: Product;
+}
 
 // Product Queries
 export const GET_PRODUCTS = gql`

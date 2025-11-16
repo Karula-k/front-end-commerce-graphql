@@ -5,7 +5,7 @@ import { useQuery } from "@apollo/client/react";
 import { ProductCard } from "@/components/product-card";
 import { ProductFilters } from "@/components/product-filters";
 import { ProductManagement } from "@/components/product-management";
-import { GET_PRODUCTS } from "@/lib/graphql/queries";
+import { GET_PRODUCTS, GetProductsResponse } from "@/lib/graphql/queries";
 import { Product } from "@/lib/stores/cart-store";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -29,7 +29,7 @@ export default function ProductsPage() {
     max: null,
   });
 
-  const { data, loading, error, refetch } = useQuery(GET_PRODUCTS, {
+  const { data, loading, error, refetch } = useQuery<GetProductsResponse>(GET_PRODUCTS, {
     variables: {
       name: searchQuery || undefined,
       category: categoryFilter || undefined,
