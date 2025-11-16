@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ApolloWrapper } from "@/components/ApolloClientProvider";
+import { Navbar } from "@/components/navbar";
+import { CartSidebar } from "@/components/cart-sidebar";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,7 +31,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ApolloWrapper>{children}</ApolloWrapper>
+        <ApolloWrapper>
+          <div className="min-h-screen bg-gray-50">
+            <Navbar />
+            <main className="container mx-auto px-6 py-8 max-w-7xl">
+              {children}
+            </main>
+            <CartSidebar />
+            <Toaster />
+          </div>
+        </ApolloWrapper>
       </body>
     </html>
   );
