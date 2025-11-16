@@ -1,18 +1,13 @@
-"use client";
-// ^ this file needs the "use client" pragma
+import { HttpLink, ApolloClient, InMemoryCache } from "@apollo/client";
 
-import { HttpLink } from "@apollo/client";
-import { ApolloClient, InMemoryCache } from "@apollo/client-integration-nextjs";
+const httpLink = new HttpLink({
+  uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:3000/graphql",
+});
 
-export function makeClient() {
-  const httpLink = new HttpLink({
-    uri: "http://localhost:3000/graphql",
+const client = new ApolloClient({
+  link: httpLink,
+  cache: new InMemoryCache(),
+  ssrMode: typeof window === "undefined",
+});
 
-    fetchOptions: {},
-  });
-
-  return new ApolloClient({
-    cache: new InMemoryCache(),
-    link: httpLink,
-  });
-}
+export default client;
