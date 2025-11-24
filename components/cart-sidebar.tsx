@@ -12,8 +12,32 @@ import { Badge } from "@/components/ui/badge";
 import { useCartStore } from "@/lib/stores/cart-store";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { useMutation } from "@apollo/client/react";
+import { CREATE_ORDER } from "@/lib/graphql/queries";
+import { REGISTER_USER } from "@/lib/graphql/queries";
+import { GET_ALL_USERS } from "@/lib/graphql/queries";
+import { CREATE_ORDER_PRODUCT } from "@/lib/graphql/queries";
+import { useQuery } from "@apollo/client/react";
+// TypeScript types for GraphQL responses
+interface User {
+  id: string;
+  name: string;
+}
+
+interface AllUsersResponse {
+  allUsers: User[];
+}
+
+interface RegisterUserResponse {
+  registerUser: User;
+}
+
+interface CreateOrderResponse {
+  createOrder: { id: string };
+}
 
 export function CartSidebar() {
+  const { data: usersData } = useQuery<AllUsersResponse>(GET_ALL_USERS);
   const {
     items,
     isCartOpen,
@@ -21,18 +45,94 @@ export function CartSidebar() {
     removeFromCart,
     updateQuantity,
     getTotalPrice,
-    createOrder,
+    clearCart,
   } = useCartStore();
+  const [createOrderMutation] = useMutation(CREATE_ORDER);
+  const [registerUserMutation] = useMutation(REGISTER_USER);
+  const [createOrderProductMutation] = useMutation(CREATE_ORDER_PRODUCT);
   const router = useRouter();
 
   const totalPrice = getTotalPrice();
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (items.length === 0) return;
 
-    const order = createOrder();
-    setCartOpen(false);
-    router.push(`/orders/${order.id}`);
+    // Find or create Guest user
+    let userId = "";
+    const guestUser = usersData?.allUsers?.find((u) => u.name === "Guest");
+    if (guestUser) {
+      userId = guestUser.id;
+    } else {
+      try {
+        const userRes = await registerUserMutation({
+          variables: {
+            data: { name: "Guest" },
+          },
+        });
+        if (
+          userRes.data &&
+          typeof userRes.data === "object" &&
+          "registerUser" in userRes.data
+        ) {
+          userId = (userRes.data as RegisterUserResponse).registerUser.id;
+        } else {
+          userId = "";
+        }
+      } catch (error) {
+        console.error("User registration failed", error);
+        return;
+      }
+    }
+
+    let orderId = "";
+    try {
+      // Generate order number right before mutation (impure function inside async)
+      const orderNumber = `ORD-${Date.now().toString().slice(-6)}`;
+      // First, create the order to get its ID
+      const orderRes = await createOrderMutation({
+        variables: {
+          data: {
+            userId,
+            orderNumber,
+            orderStatus: "pending",
+            totalAmount: totalPrice,
+            orderProducts: [], // initially empty, will add after
+          },
+        },
+      });
+      if (
+        orderRes.data &&
+        typeof orderRes.data === "object" &&
+        "createOrder" in orderRes.data
+      ) {
+        orderId = (orderRes.data as CreateOrderResponse).createOrder.id;
+      }
+      // Now, create orderProducts with orderId
+      if (orderId) {
+        await Promise.all(
+          items.map((item) =>
+            createOrderProductMutation({
+              variables: {
+                data: {
+                  orderId,
+                  productId: item.product.id,
+                  quantity: item.quantity,
+                  price: item.product.price,
+                },
+              },
+            })
+          )
+        );
+      }
+      clearCart();
+      setCartOpen(false);
+      if (orderId) {
+        router.push(`/orders/${orderId}`);
+      }
+    } catch (error) {
+      // Optionally show error toast
+      console.error("Order creation failed", error);
+    }
   };
 
   return (

@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { useCartStore } from "@/lib/stores/cart-store";
+import { useQuery } from "@apollo/client/react";
+import { GET_ORDER } from "@/lib/graphql/queries";
 import {
   ArrowLeft,
   Package,
@@ -18,45 +19,6 @@ import {
 } from "lucide-react";
 
 export default function OrderDetailPage() {
-  const params = useParams();
-  const router = useRouter();
-  const { getOrderById } = useCartStore();
-
-  const orderId = params.id as string;
-  const order = getOrderById(orderId);
-
-  if (!order) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center space-x-4">
-          <Button variant="ghost" onClick={() => router.back()}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              Order Not Found
-            </h1>
-            <p className="text-muted-foreground">
-              The order you&apos;re looking for doesn&apos;t exist.
-            </p>
-          </div>
-        </div>
-
-        <div className="text-center py-12">
-          <Package className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-          <div className="text-lg font-medium mb-2">Order not found</div>
-          <div className="text-sm text-muted-foreground mb-6">
-            This order may have been removed or the link is incorrect.
-          </div>
-          <Button asChild>
-            <Link href="/orders">View All Orders</Link>
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "pending":
@@ -73,26 +35,51 @@ export default function OrderDetailPage() {
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
+  const params = useParams();
+  const router = useRouter();
+  const orderId = params.id as string;
+  const { data, loading, error } = useQuery(GET_ORDER, {
+    variables: { id: orderId },
+  });
+  const order = data?.getOrder;
 
-  const getStatusSteps = (currentStatus: string) => {
-    const steps = [
-      { key: "pending", label: "Order Placed", icon: Package },
-      { key: "confirmed", label: "Confirmed", icon: CheckCircle },
-      { key: "shipped", label: "Shipped", icon: MapPin },
-      { key: "delivered", label: "Delivered", icon: CheckCircle },
-    ];
+  if (loading) return <div>Loading order...</div>;
+  if (error || !order) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center space-x-4">
+          <Button variant="ghost" onClick={() => router.back()}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Order Not Found
+            </h1>
+            <p className="text-muted-foreground">
+              The order you are looking for does not exist.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-    const statusOrder = ["pending", "confirmed", "shipped", "delivered"];
-    const currentIndex = statusOrder.indexOf(currentStatus.toLowerCase());
-
-    return steps.map((step, index) => ({
-      ...step,
-      completed: index <= currentIndex,
-      current: index === currentIndex,
-    }));
-  };
-
-  const statusSteps = getStatusSteps(order.orderStatus);
+  // Status steps for timeline
+  const statusSteps = [
+    { key: "pending", label: "Order Placed", icon: Package },
+    { key: "confirmed", label: "Confirmed", icon: CheckCircle },
+    { key: "shipped", label: "Shipped", icon: MapPin },
+    { key: "delivered", label: "Delivered", icon: CheckCircle },
+  ];
+  const statusOrder = ["pending", "confirmed", "shipped", "delivered"];
+  const currentStatus = order.orderStatus || "pending";
+  const currentIndex = statusOrder.indexOf(currentStatus.toLowerCase());
+  const steps = statusSteps.map((step, index) => ({
+    ...step,
+    completed: index <= currentIndex,
+    current: index === currentIndex,
+  }));
 
   return (
     <div className="space-y-6">
@@ -137,7 +124,7 @@ export default function OrderDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {statusSteps.map((step, index) => (
+                {steps.map((step, index) => (
                   <div key={step.key} className="flex items-center space-x-4">
                     <div
                       className={`flex h-8 w-8 items-center justify-center rounded-full border-2 ${
@@ -178,11 +165,11 @@ export default function OrderDetailPage() {
           {/* Order Items */}
           <Card>
             <CardHeader>
-              <CardTitle>Order Items ({order.items.length})</CardTitle>
+              <CardTitle>Order Items ({(order.items ?? []).length})</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {order.items.map((item, index) => (
+                {(order.items ?? []).map((item: any, index: number) => (
                   <div key={index}>
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
@@ -207,7 +194,7 @@ export default function OrderDetailPage() {
                         </div>
                       </div>
                     </div>
-                    {index < order.items.length - 1 && (
+                    {index < (order.items?.length ?? 0) - 1 && (
                       <Separator className="mt-4" />
                     )}
                   </div>

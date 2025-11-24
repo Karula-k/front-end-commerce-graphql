@@ -11,12 +11,38 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { useCartStore } from "@/lib/stores/cart-store";
+import { useQuery } from "@apollo/client/react";
+import { GET_ORDERS } from "@/lib/graphql/queries";
 import { formatDistanceToNow } from "date-fns";
 import { Package, Calendar, DollarSign, ShoppingBag } from "lucide-react";
 
 export default function OrdersPage() {
-  const { orders } = useCartStore();
+  interface GetOrdersResponse {
+    getOrders?: Order[];
+  }
+  const { data, loading, error } = useQuery<GetOrdersResponse>(GET_ORDERS);
+  // Type definitions for order and item
+  type Product = {
+    id: string;
+    name: string;
+    price: number;
+    category?: string;
+  };
+  type OrderItem = {
+    product: Product;
+    quantity: number;
+  };
+  type Order = {
+    id: string;
+    orderNumber: string;
+    createdAt: string;
+    orderStatus: string;
+    totalAmount: number;
+    items?: OrderItem[];
+    userId?: string;
+    updatedAt?: string;
+  };
+  const orders: Order[] = Array.isArray(data?.getOrders) ? data.getOrders! : [];
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -35,6 +61,8 @@ export default function OrdersPage() {
     }
   };
 
+  if (loading) return <div>Loading orders...</div>;
+  if (error) return <div>Error loading orders.</div>;
   if (orders.length === 0) {
     return (
       <div className="space-y-6">
@@ -89,8 +117,8 @@ export default function OrdersPage() {
                     </span>
                     <span className="flex items-center gap-1">
                       <Package className="h-3 w-3" />
-                      {order.items.length}{" "}
-                      {order.items.length === 1 ? "item" : "items"}
+                      {order.items?.length ?? 0}{" "}
+                      {(order.items?.length ?? 0) === 1 ? "item" : "items"}
                     </span>
                   </CardDescription>
                 </div>
@@ -112,7 +140,7 @@ export default function OrdersPage() {
                 <div>
                   <h4 className="font-medium mb-3">Order Items</h4>
                   <div className="space-y-3">
-                    {order.items.map((item, index) => (
+                    {(order.items ?? []).map((item, index) => (
                       <div key={`${item.product.id}-${index}`}>
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
@@ -134,7 +162,7 @@ export default function OrdersPage() {
                             ).toLocaleString("id-ID")}
                           </div>
                         </div>
-                        {index < order.items.length - 1 && (
+                        {index < (order.items?.length ?? 0) - 1 && (
                           <Separator className="mt-3" />
                         )}
                       </div>

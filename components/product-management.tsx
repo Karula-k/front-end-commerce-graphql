@@ -60,7 +60,7 @@ export function ProductManagement({
       if (mode === "create") {
         await createProduct({
           variables: {
-            input: {
+            data: {
               name: formData.name,
               price: parseFloat(formData.price),
               stock: parseInt(formData.stock),
