@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useQuery } from "@apollo/client/react";
 import { GET_ORDER } from "@/lib/graphql/queries";
+import type { GetOrderResponse } from "@/lib/graphql/queries";
 import {
   ArrowLeft,
   Package,
@@ -38,7 +39,7 @@ export default function OrderDetailPage() {
   const params = useParams();
   const router = useRouter();
   const orderId = params.id as string;
-  const { data, loading, error } = useQuery(GET_ORDER, {
+  const { data, loading, error } = useQuery<GetOrderResponse>(GET_ORDER, {
     variables: { id: orderId },
   });
   const order = data?.getOrder;
@@ -75,10 +76,10 @@ export default function OrderDetailPage() {
   const statusOrder = ["pending", "confirmed", "shipped", "delivered"];
   const currentStatus = order.orderStatus || "pending";
   const currentIndex = statusOrder.indexOf(currentStatus.toLowerCase());
-  const steps = statusSteps.map((step, index) => ({
+  const steps = statusSteps.map((step, idx) => ({
     ...step,
-    completed: index <= currentIndex,
-    current: index === currentIndex,
+    completed: idx <= currentIndex,
+    current: idx === currentIndex,
   }));
 
   return (
@@ -169,7 +170,7 @@ export default function OrderDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {(order.items ?? []).map((item: any, index: number) => (
+                {(order.items ?? []).map((item, index) => (
                   <div key={index}>
                     <div className="flex items-center justify-between">
                       <div className="flex-1">

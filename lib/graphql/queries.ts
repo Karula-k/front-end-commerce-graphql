@@ -10,6 +10,19 @@ export interface GetProductResponse {
   getProduct: Product;
 }
 
+export interface GetOrderResponse {
+  getOrder: {
+    id: string;
+    userId: string;
+    orderNumber: string;
+    orderStatus: string;
+    totalAmount: number;
+    createdAt: string;
+    updatedAt: string;
+    items?: any[]; // Adjust type if you have a specific type for items
+  };
+}
+
 // Product Queries
 export const GET_PRODUCTS = gql`
   query GetProducts(
