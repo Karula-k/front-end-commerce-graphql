@@ -21,16 +21,20 @@ export default function OrdersPage() {
     getOrders?: Order[];
   }
   const { data, loading, error } = useQuery<GetOrdersResponse>(GET_ORDERS);
-  // Type definitions for order and item
+  // Type definitions for order and orderProducts
   type Product = {
     id: string;
     name: string;
     price: number;
     category?: string;
+    stock?: number;
   };
-  type OrderItem = {
-    product: Product;
+  type OrderProduct = {
+    id: string;
+    productId: string;
     quantity: number;
+    price: number;
+    product: Product;
   };
   type Order = {
     id: string;
@@ -38,7 +42,7 @@ export default function OrdersPage() {
     createdAt: string;
     orderStatus: string;
     totalAmount: number;
-    items?: OrderItem[];
+    orderProducts?: OrderProduct[];
     userId?: string;
     updatedAt?: string;
   };
@@ -117,8 +121,10 @@ export default function OrdersPage() {
                     </span>
                     <span className="flex items-center gap-1">
                       <Package className="h-3 w-3" />
-                      {order.items?.length ?? 0}{" "}
-                      {(order.items?.length ?? 0) === 1 ? "item" : "items"}
+                      {order.orderProducts?.length ?? 0}{" "}
+                      {(order.orderProducts?.length ?? 0) === 1
+                        ? "item"
+                        : "items"}
                     </span>
                   </CardDescription>
                 </div>
@@ -140,7 +146,7 @@ export default function OrdersPage() {
                 <div>
                   <h4 className="font-medium mb-3">Order Items</h4>
                   <div className="space-y-3">
-                    {(order.items ?? []).map((item, index) => (
+                    {(order.orderProducts ?? []).map((item, index) => (
                       <div key={`${item.product.id}-${index}`}>
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
@@ -162,7 +168,7 @@ export default function OrdersPage() {
                             ).toLocaleString("id-ID")}
                           </div>
                         </div>
-                        {index < (order.items?.length ?? 0) - 1 && (
+                        {index < (order.orderProducts?.length ?? 0) - 1 && (
                           <Separator className="mt-3" />
                         )}
                       </div>

@@ -125,7 +125,7 @@ export default function OrderDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {steps.map((step, index) => (
+                {steps.map((step) => (
                   <div key={step.key} className="flex items-center space-x-4">
                     <div
                       className={`flex h-8 w-8 items-center justify-center rounded-full border-2 ${
@@ -166,11 +166,13 @@ export default function OrderDetailPage() {
           {/* Order Items */}
           <Card>
             <CardHeader>
-              <CardTitle>Order Items ({(order.items ?? []).length})</CardTitle>
+              <CardTitle>
+                Order Items ({(order.orderProducts ?? []).length})
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {(order.items ?? []).map((item, index) => (
+                {(order.orderProducts ?? []).map((item, index) => (
                   <div key={index}>
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
@@ -195,7 +197,7 @@ export default function OrderDetailPage() {
                         </div>
                       </div>
                     </div>
-                    {index < (order.items?.length ?? 0) - 1 && (
+                    {index < (order.orderProducts?.length ?? 0) - 1 && (
                       <Separator className="mt-4" />
                     )}
                   </div>

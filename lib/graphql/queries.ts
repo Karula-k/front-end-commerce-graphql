@@ -19,7 +19,19 @@ export interface GetOrderResponse {
     totalAmount: number;
     createdAt: string;
     updatedAt: string;
-    items?: any[]; // Adjust type if you have a specific type for items
+    orderProducts?: Array<{
+      id: string;
+      productId: string;
+      quantity: number;
+      price: number;
+      product: {
+        id: string;
+        name: string;
+        category: string;
+        price: number;
+        stock: number;
+      };
+    }>;
   };
 }
 
@@ -121,6 +133,19 @@ export const GET_ORDER = gql`
       totalAmount
       createdAt
       updatedAt
+      orderProducts {
+        id
+        productId
+        quantity
+        price
+        product {
+          id
+          name
+          category
+          price
+          stock
+        }
+      }
     }
   }
 `;
