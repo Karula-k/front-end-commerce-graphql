@@ -72,8 +72,8 @@ export function ProductManagement({
       } else if (mode === "edit" && product) {
         await updateProduct({
           variables: {
-            id: product.id,
-            input: {
+            data: {
+              id: product.id,
               name: formData.name,
               price: parseFloat(formData.price),
               stock: parseInt(formData.stock),
